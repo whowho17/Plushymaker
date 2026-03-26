@@ -1,0 +1,752 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Build Your Bouquet — PlushBouquet</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --pink:   #FF6B9D;
+    --yellow: #FFD93D;
+    --mint:   #6BCB77;
+    --sky:    #4D96FF;
+    --orange: #FF9A3C;
+    --purple: #C77DFF;
+    --cream:  #FFF8F0;
+    --dark:   #2D2D2D;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Nunito', sans-serif; background: var(--cream); min-height: 100vh; }
+
+  header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 1rem 2rem;
+    background: white;
+    border-bottom: 3px solid var(--dark);
+    position: sticky; top: 0; z-index: 100;
+  }
+  .logo-link {
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.6rem;
+    text-decoration: none;
+    color: var(--dark);
+  }
+  .logo-link span { color: var(--pink); }
+  .logo-link span.b { color: var(--sky); }
+
+  .main-layout {
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    min-height: calc(100vh - 65px);
+  }
+
+  /* ---- SIDEBAR ---- */
+  .sidebar {
+    background: white;
+    border-right: 3px solid var(--dark);
+    padding: 1.5rem;
+    overflow-y: auto;
+  }
+  .sidebar h2 {
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.3rem;
+    margin-bottom: 1rem;
+    color: var(--dark);
+  }
+
+  .plush-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+  }
+  .plush-card {
+    background: var(--cream);
+    border: 2.5px solid var(--dark);
+    border-radius: 16px;
+    padding: 0.8rem 0.5rem 0.6rem;
+    cursor: pointer;
+    text-align: center;
+    transition: transform 0.15s, box-shadow 0.15s, background 0.15s;
+    box-shadow: 3px 3px 0 var(--dark);
+    user-select: none;
+  }
+  .plush-card:hover { transform: translateY(-3px); box-shadow: 4px 6px 0 var(--dark); }
+  .plush-card:active { transform: scale(0.96); }
+  .plush-card svg { width: 60px; height: 60px; display: block; margin: 0 auto 0.3rem; }
+  .plush-card .name {
+    font-family: 'Fredoka One', cursive;
+    font-size: 0.85rem;
+    color: var(--dark);
+  }
+
+  /* Add button flash */
+  .plush-card.added {
+    animation: pop 0.3s ease;
+  }
+  @keyframes pop {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.12); }
+    100% { transform: scale(1); }
+  }
+
+  /* Message box */
+  .msg-section { margin-top: 1.5rem; }
+  .msg-section label {
+    font-family: 'Fredoka One', cursive;
+    font-size: 1rem;
+    display: block;
+    margin-bottom: 0.5rem;
+  }
+  .msg-section textarea {
+    width: 100%;
+    border: 2.5px solid var(--dark);
+    border-radius: 12px;
+    padding: 0.7rem;
+    font-family: 'Nunito', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 600;
+    resize: none;
+    background: var(--cream);
+    color: var(--dark);
+    outline: none;
+    box-shadow: 3px 3px 0 var(--dark);
+    transition: box-shadow 0.15s;
+  }
+  .msg-section textarea:focus { box-shadow: 4px 5px 0 var(--dark); }
+
+  /* Clear button */
+  .btn-clear {
+    margin-top: 1rem;
+    width: 100%;
+    background: white;
+    border: 2.5px solid var(--dark);
+    border-radius: 100px;
+    padding: 0.5rem;
+    font-family: 'Fredoka One', cursive;
+    font-size: 1rem;
+    cursor: pointer;
+    box-shadow: 3px 3px 0 var(--dark);
+    transition: transform 0.15s, box-shadow 0.15s;
+  }
+  .btn-clear:hover { transform: translateY(-2px); box-shadow: 4px 5px 0 var(--dark); }
+
+  /* ---- CANVAS AREA ---- */
+  .canvas-area {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 2rem;
+    gap: 1.5rem;
+  }
+
+  .bouquet-stage {
+    background: white;
+    border: 3px solid var(--dark);
+    border-radius: 24px;
+    box-shadow: 6px 6px 0 var(--dark);
+    width: 100%;
+    max-width: 640px;
+    min-height: 380px;
+    padding: 2rem;
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* Decorative bg pattern */
+  .bouquet-stage::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: radial-gradient(circle, rgba(255,107,157,0.06) 1px, transparent 1px);
+    background-size: 24px 24px;
+    pointer-events: none;
+  }
+
+  .stage-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 280px;
+    gap: 1rem;
+    color: #bbb;
+  }
+  .stage-empty .empty-icon { font-size: 3.5rem; animation: bounce 2s ease-in-out infinite; }
+  @keyframes bounce {
+    0%,100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+  }
+  .stage-empty p { font-family: 'Fredoka One', cursive; font-size: 1.2rem; }
+
+  /* Plush items in bouquet */
+  .bouquet-items {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    justify-content: center;
+    align-items: flex-end;
+    padding-bottom: 1rem;
+    min-height: 140px;
+  }
+
+  .bouquet-item {
+    position: relative;
+    animation: popIn 0.35s cubic-bezier(0.34,1.56,0.64,1);
+    cursor: pointer;
+  }
+  @keyframes popIn {
+    from { transform: scale(0) rotate(-15deg); opacity: 0; }
+    to   { transform: scale(1) rotate(0deg);  opacity: 1; }
+  }
+  .bouquet-item svg { display: block; filter: drop-shadow(2px 4px 6px rgba(0,0,0,0.12)); }
+  .bouquet-item .remove-btn {
+    position: absolute;
+    top: -6px; right: -6px;
+    width: 20px; height: 20px;
+    border-radius: 50%;
+    background: var(--dark);
+    color: white;
+    font-size: 11px;
+    display: none;
+    align-items: center; justify-content: center;
+    cursor: pointer;
+    font-weight: 800;
+    border: none;
+  }
+  .bouquet-item:hover .remove-btn { display: flex; }
+
+  /* Ribbon at bottom */
+  .ribbon {
+    display: flex;
+    justify-content: center;
+    padding-top: 0.5rem;
+    border-top: 2px dashed rgba(0,0,0,0.08);
+  }
+  .ribbon svg { width: 100px; }
+
+  /* Message preview */
+  .msg-preview {
+    background: white;
+    border: 2.5px solid var(--dark);
+    border-radius: 16px;
+    padding: 1rem 1.4rem;
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--dark);
+    box-shadow: 4px 4px 0 var(--dark);
+    max-width: 640px;
+    width: 100%;
+    text-align: center;
+    min-height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-style: italic;
+    color: #666;
+  }
+  .msg-preview.has-msg { color: var(--dark); font-style: normal; }
+
+  /* Counter badge */
+  .count-badge {
+    background: var(--pink);
+    color: white;
+    font-family: 'Fredoka One', cursive;
+    font-size: 0.85rem;
+    border-radius: 100px;
+    padding: 0.2rem 0.7rem;
+    margin-left: 0.5rem;
+  }
+
+  /* Action buttons */
+  .actions {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    justify-content: center;
+    max-width: 640px;
+    width: 100%;
+  }
+  .btn {
+    display: inline-flex; align-items: center; gap: 0.5rem;
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.1rem;
+    padding: 0.75rem 1.8rem;
+    border-radius: 100px;
+    border: none; cursor: pointer;
+    text-decoration: none;
+    transition: transform 0.15s, box-shadow 0.15s;
+  }
+  .btn:hover { transform: translateY(-3px) scale(1.03); }
+  .btn:active { transform: scale(0.97); }
+  .btn-share {
+    background: var(--pink);
+    color: white;
+    box-shadow: 0 5px 0 #d94f82, 0 8px 20px rgba(255,107,157,0.3);
+    flex: 1;
+  }
+  .btn-share:hover { box-shadow: 0 7px 0 #d94f82, 0 12px 28px rgba(255,107,157,0.35); }
+  .btn-share:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+  .btn-view {
+    background: var(--sky);
+    color: white;
+    box-shadow: 0 5px 0 #2b6fd1, 0 8px 20px rgba(77,150,255,0.3);
+    flex: 1;
+  }
+  .btn-view:hover { box-shadow: 0 7px 0 #2b6fd1, 0 12px 28px rgba(77,150,255,0.35); }
+  .btn-view:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+  /* Share modal */
+  .modal-overlay {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.4);
+    backdrop-filter: blur(4px);
+    z-index: 200;
+    align-items: center; justify-content: center;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: white;
+    border: 3px solid var(--dark);
+    border-radius: 24px;
+    box-shadow: 8px 8px 0 var(--dark);
+    padding: 2rem;
+    max-width: 460px;
+    width: 90%;
+    text-align: center;
+    animation: slideUp 0.3s cubic-bezier(0.34,1.56,0.64,1);
+  }
+  @keyframes slideUp {
+    from { transform: translateY(40px) scale(0.9); opacity: 0; }
+    to   { transform: translateY(0) scale(1); opacity: 1; }
+  }
+  .modal h3 { font-family: 'Fredoka One', cursive; font-size: 1.6rem; margin-bottom: 0.5rem; }
+  .modal p  { color: #666; font-size: 0.95rem; margin-bottom: 1.2rem; font-weight: 600; }
+  .link-box {
+    display: flex; gap: 0.5rem;
+    background: var(--cream);
+    border: 2.5px solid var(--dark);
+    border-radius: 12px;
+    padding: 0.5rem 0.5rem 0.5rem 1rem;
+    box-shadow: 3px 3px 0 var(--dark);
+    margin-bottom: 1.2rem;
+  }
+  .link-box input {
+    flex: 1; background: transparent; border: none;
+    font-family: 'Nunito', sans-serif;
+    font-size: 0.85rem; font-weight: 700;
+    color: var(--dark); outline: none;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .btn-copy {
+    background: var(--dark); color: white;
+    border: none; border-radius: 8px;
+    padding: 0.4rem 0.9rem;
+    font-family: 'Fredoka One', cursive;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: background 0.15s;
+    white-space: nowrap;
+  }
+  .btn-copy:hover { background: #444; }
+  .btn-copy.copied { background: var(--mint); }
+  .modal-close {
+    background: white; border: 2.5px solid var(--dark);
+    border-radius: 100px; padding: 0.5rem 1.5rem;
+    font-family: 'Fredoka One', cursive; font-size: 1rem;
+    cursor: pointer; box-shadow: 3px 3px 0 var(--dark);
+    transition: transform 0.15s, box-shadow 0.15s;
+  }
+  .modal-close:hover { transform: translateY(-2px); box-shadow: 4px 5px 0 var(--dark); }
+
+  /* Plush size variation in bouquet */
+  .size-sm svg { width: 68px; height: 68px; }
+  .size-md svg { width: 80px; height: 80px; }
+  .size-lg svg { width: 96px; height: 96px; }
+
+  @media (max-width: 680px) {
+    .main-layout { grid-template-columns: 1fr; }
+    .sidebar { border-right: none; border-bottom: 3px solid var(--dark); }
+    .plush-grid { grid-template-columns: repeat(4, 1fr); }
+    .plush-card svg { width: 44px; height: 44px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <a href="index.html" class="logo-link"><span>Plush</span><span class="b">Bouquet</span> 🧸</a>
+  <span id="countBadge" style="display:none" class="count-badge">0 plushies</span>
+</header>
+
+<div class="main-layout">
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <h2>🧸 Pick a plushie</h2>
+    <div class="plush-grid" id="plushGrid"></div>
+
+    <div class="msg-section">
+      <label>💌 Your message</label>
+      <textarea id="messageInput" rows="3" maxlength="120" placeholder="e.g. Happy Birthday! 🎉"></textarea>
+    </div>
+    <button class="btn-clear" onclick="clearBouquet()">🗑 Clear bouquet</button>
+  </aside>
+
+  <!-- CANVAS -->
+  <main class="canvas-area">
+    <div class="bouquet-stage" id="stage">
+      <div class="stage-empty" id="stageEmpty">
+        <span class="empty-icon">🧸</span>
+        <p>Pick plushies to start your bouquet!</p>
+      </div>
+      <div class="bouquet-items" id="bouquetItems" style="display:none"></div>
+      <div class="ribbon" id="ribbon" style="display:none">
+        <svg viewBox="0 0 100 40" xmlns="http://www.w3.org/2000/svg">
+          <path d="M10 20 Q25 5 50 10 Q75 5 90 20 Q75 35 50 30 Q25 35 10 20Z" fill="#FF6B9D" opacity="0.85"/>
+          <ellipse cx="50" cy="20" rx="10" ry="8" fill="#FF8FAB"/>
+          <path d="M50 10 Q40 0 30 8" stroke="#d94f82" stroke-width="2" fill="none" stroke-linecap="round"/>
+          <path d="M50 10 Q60 0 70 8" stroke="#d94f82" stroke-width="2" fill="none" stroke-linecap="round"/>
+        </svg>
+      </div>
+    </div>
+
+    <div class="msg-preview" id="msgPreview">Your message will appear here 💬</div>
+
+    <div class="actions">
+      <button class="btn btn-share" id="btnShare" onclick="openShare()" disabled>💌 Get share link</button>
+      <button class="btn btn-view" id="btnView" onclick="viewBouquet()" disabled>🎀 View bouquet</button>
+    </div>
+  </main>
+</div>
+
+<!-- SHARE MODAL -->
+<div class="modal-overlay" id="modalOverlay" onclick="closeShareOnOverlay(event)">
+  <div class="modal">
+    <h3>🎀 Your bouquet is ready!</h3>
+    <p>Copy the link below and share it with anyone!</p>
+    <div class="link-box">
+      <input type="text" id="shareLink" readonly />
+      <button class="btn-copy" id="btnCopy" onclick="copyLink()">Copy</button>
+    </div>
+    <button class="modal-close" onclick="closeShare()">Done! 🎉</button>
+  </div>
+</div>
+
+<script>
+// ─── PLUSH SVG DEFINITIONS ───────────────────────────────────────────────────
+
+const PLUSHIES = [
+  {
+    id: 'bear',
+    name: 'Bear',
+    color: '#FFAB76',
+    svg: (s = 90) => `
+      <svg width="${s}" height="${s}" viewBox="0 0 90 90" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="45" cy="52" r="30" fill="#FFAB76"/>
+        <circle cx="23" cy="28" r="14" fill="#FFAB76"/>
+        <circle cx="67" cy="28" r="14" fill="#FFAB76"/>
+        <circle cx="23" cy="28" r="8"  fill="#FF8C4B"/>
+        <circle cx="67" cy="28" r="8"  fill="#FF8C4B"/>
+        <ellipse cx="45" cy="60" rx="16" ry="11" fill="#FF8C4B"/>
+        <circle cx="37" cy="45" r="5" fill="#2D2D2D"/>
+        <circle cx="53" cy="45" r="5" fill="#2D2D2D"/>
+        <circle cx="38.5" cy="43.5" r="2" fill="white"/>
+        <circle cx="54.5" cy="43.5" r="2" fill="white"/>
+        <ellipse cx="45" cy="55" rx="5.5" ry="4" fill="#2D2D2D"/>
+        <path d="M40 59 Q45 64 50 59" stroke="#2D2D2D" stroke-width="2" fill="none" stroke-linecap="round"/>
+        <circle cx="45" cy="33" r="3" fill="#FF8C4B"/>
+      </svg>`
+  },
+  {
+    id: 'bunny',
+    name: 'Bunny',
+    color: '#FFB3C6',
+    svg: (s = 90) => `
+      <svg width="${s}" height="${s}" viewBox="0 0 90 90" xmlns="http://www.w3.org/2000/svg">
+        <ellipse cx="32" cy="22" rx="9" ry="20" fill="#FFB3C6"/>
+        <ellipse cx="58" cy="22" rx="9" ry="20" fill="#FFB3C6"/>
+        <ellipse cx="32" cy="22" rx="5.5" ry="15" fill="#FF8FAB"/>
+        <ellipse cx="58" cy="22" rx="5.5" ry="15" fill="#FF8FAB"/>
+        <circle cx="45" cy="56" r="28" fill="#FFB3C6"/>
+        <ellipse cx="45" cy="64" rx="14" ry="9" fill="#FF8FAB"/>
+        <circle cx="37" cy="49" r="5" fill="#2D2D2D"/>
+        <circle cx="53" cy="49" r="5" fill="#2D2D2D"/>
+        <circle cx="38.5" cy="47.5" r="2" fill="white"/>
+        <circle cx="54.5" cy="47.5" r="2" fill="white"/>
+        <ellipse cx="45" cy="57" rx="5" ry="3.5" fill="#FF6B9D"/>
+        <path d="M40 61 Q45 66 50 61" stroke="#2D2D2D" stroke-width="2" fill="none" stroke-linecap="round"/>
+      </svg>`
+  },
+  {
+    id: 'cat',
+    name: 'Cat',
+    color: '#A8D8EA',
+    svg: (s = 90) => `
+      <svg width="${s}" height="${s}" viewBox="0 0 90 90" xmlns="http://www.w3.org/2000/svg">
+        <polygon points="18,36 28,10 38,34" fill="#A8D8EA"/>
+        <polygon points="52,34 62,10 72,36" fill="#A8D8EA"/>
+        <polygon points="21,35 28,14 36,33" fill="#FFB3C6"/>
+        <polygon points="54,33 62,14 70,35" fill="#FFB3C6"/>
+        <circle cx="45" cy="54" r="29" fill="#A8D8EA"/>
+        <ellipse cx="45" cy="63" rx="15" ry="10" fill="#87C4D8"/>
+        <circle cx="37" cy="47" r="5" fill="#2D2D2D"/>
+        <circle cx="53" cy="47" r="5" fill="#2D2D2D"/>
+        <circle cx="38.5" cy="45.5" r="2" fill="white"/>
+        <circle cx="54.5" cy="45.5" r="2" fill="white"/>
+        <ellipse cx="45" cy="55" rx="4.5" ry="3.5" fill="#FF6B9D"/>
+        <line x1="30" y1="51" x2="14" y2="49" stroke="#2D2D2D" stroke-width="1.8" stroke-linecap="round"/>
+        <line x1="30" y1="55" x2="13" y2="55" stroke="#2D2D2D" stroke-width="1.8" stroke-linecap="round"/>
+        <line x1="60" y1="51" x2="76" y2="49" stroke="#2D2D2D" stroke-width="1.8" stroke-linecap="round"/>
+        <line x1="60" y1="55" x2="77" y2="55" stroke="#2D2D2D" stroke-width="1.8" stroke-linecap="round"/>
+        <path d="M40 59 Q45 64 50 59" stroke="#2D2D2D" stroke-width="2" fill="none" stroke-linecap="round"/>
+      </svg>`
+  },
+  {
+    id: 'dog',
+    name: 'Dog',
+    color: '#D4A574',
+    svg: (s = 90) => `
+      <svg width="${s}" height="${s}" viewBox="0 0 90 90" xmlns="http://www.w3.org/2000/svg">
+        <ellipse cx="20" cy="38" rx="12" ry="18" fill="#D4A574" transform="rotate(-20 20 38)"/>
+        <ellipse cx="70" cy="38" rx="12" ry="18" fill="#D4A574" transform="rotate(20 70 38)"/>
+        <circle cx="45" cy="53" r="30" fill="#D4A574"/>
+        <ellipse cx="45" cy="63" rx="16" ry="10" fill="#B8864E"/>
+        <ellipse cx="45" cy="38" rx="12" ry="8"  fill="#B8864E"/>
+        <circle cx="37" cy="47" r="5" fill="#2D2D2D"/>
+        <circle cx="53" cy="47" r="5" fill="#2D2D2D"/>
+        <circle cx="38.5" cy="45.5" r="2" fill="white"/>
+        <circle cx="54.5" cy="45.5" r="2" fill="white"/>
+        <ellipse cx="45" cy="56" rx="6" ry="5" fill="#2D2D2D"/>
+        <circle cx="45" cy="54" r="3.5" fill="#FF6B9D"/>
+        <path d="M39 61 Q45 67 51 61" stroke="#2D2D2D" stroke-width="2" fill="none" stroke-linecap="round"/>
+      </svg>`
+  },
+  {
+    id: 'panda',
+    name: 'Panda',
+    color: '#F5F5F5',
+    svg: (s = 90) => `
+      <svg width="${s}" height="${s}" viewBox="0 0 90 90" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="45" cy="52" r="30" fill="#F5F5F5" stroke="#ddd" stroke-width="1"/>
+        <circle cx="23" cy="28" r="14" fill="#2D2D2D"/>
+        <circle cx="67" cy="28" r="14" fill="#2D2D2D"/>
+        <ellipse cx="45" cy="60" rx="16" ry="11" fill="#E0E0E0"/>
+        <ellipse cx="36" cy="46" rx="8" ry="7" fill="#2D2D2D"/>
+        <ellipse cx="54" cy="46" rx="8" ry="7" fill="#2D2D2D"/>
+        <circle cx="36" cy="46" r="4" fill="#2D2D2D"/>
+        <circle cx="54" cy="46" r="4" fill="#2D2D2D"/>
+        <circle cx="37.5" cy="44.5" r="2" fill="white"/>
+        <circle cx="55.5" cy="44.5" r="2" fill="white"/>
+        <ellipse cx="45" cy="56" rx="5.5" ry="4" fill="#2D2D2D"/>
+        <path d="M40 60 Q45 65 50 60" stroke="#2D2D2D" stroke-width="2" fill="none" stroke-linecap="round"/>
+      </svg>`
+  },
+  {
+    id: 'fox',
+    name: 'Fox',
+    color: '#FF8C42',
+    svg: (s = 90) => `
+      <svg width="${s}" height="${s}" viewBox="0 0 90 90" xmlns="http://www.w3.org/2000/svg">
+        <polygon points="20,38 28,8 45,30"  fill="#FF8C42"/>
+        <polygon points="45,30 62,8 70,38"  fill="#FF8C42"/>
+        <polygon points="22,37 28,12 42,30" fill="#FFD93D"/>
+        <polygon points="48,30 62,12 68,37" fill="#FFD93D"/>
+        <circle cx="45" cy="54" r="30" fill="#FF8C42"/>
+        <ellipse cx="45" cy="63" rx="16" ry="11" fill="#FFD93D"/>
+        <ellipse cx="45" cy="44" rx="13" ry="9"  fill="#FFD93D"/>
+        <circle cx="37" cy="47" r="5" fill="#2D2D2D"/>
+        <circle cx="53" cy="47" r="5" fill="#2D2D2D"/>
+        <circle cx="38.5" cy="45.5" r="2" fill="white"/>
+        <circle cx="54.5" cy="45.5" r="2" fill="white"/>
+        <ellipse cx="45" cy="56" rx="5" ry="3.5" fill="#2D2D2D"/>
+        <path d="M40 60 Q45 65 50 60" stroke="#2D2D2D" stroke-width="2" fill="none" stroke-linecap="round"/>
+      </svg>`
+  },
+  {
+    id: 'frog',
+    name: 'Frog',
+    color: '#6BCB77',
+    svg: (s = 90) => `
+      <svg width="${s}" height="${s}" viewBox="0 0 90 90" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="22" cy="26" r="14" fill="#6BCB77"/>
+        <circle cx="68" cy="26" r="14" fill="#6BCB77"/>
+        <circle cx="22" cy="26" r="9"  fill="#4CAF57"/>
+        <circle cx="68" cy="26" r="9"  fill="#4CAF57"/>
+        <circle cx="45" cy="55" r="30" fill="#6BCB77"/>
+        <ellipse cx="45" cy="65" rx="17" ry="10" fill="#4CAF57"/>
+        <ellipse cx="45" cy="44" rx="14" ry="8"  fill="#C8F7C5"/>
+        <circle cx="37" cy="47" r="5" fill="#2D2D2D"/>
+        <circle cx="53" cy="47" r="5" fill="#2D2D2D"/>
+        <circle cx="38.5" cy="45.5" r="2" fill="white"/>
+        <circle cx="54.5" cy="45.5" r="2" fill="white"/>
+        <ellipse cx="45" cy="57" rx="7" ry="4" fill="#2D2D2D"/>
+        <path d="M38 62 Q45 67 52 62" stroke="#2D2D2D" stroke-width="2" fill="none" stroke-linecap="round"/>
+      </svg>`
+  },
+  {
+    id: 'penguin',
+    name: 'Penguin',
+    color: '#2D2D2D',
+    svg: (s = 90) => `
+      <svg width="${s}" height="${s}" viewBox="0 0 90 90" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="45" cy="53" r="30" fill="#2D2D2D"/>
+        <ellipse cx="45" cy="60" rx="18" ry="20" fill="#F5F5F5"/>
+        <circle cx="45" cy="35" r="16" fill="#2D2D2D"/>
+        <ellipse cx="45" cy="35" rx="10" ry="12" fill="#F5F5F5"/>
+        <circle cx="38" cy="47" r="5" fill="#2D2D2D"/>
+        <circle cx="52" cy="47" r="5" fill="#2D2D2D"/>
+        <circle cx="39.5" cy="45.5" r="2" fill="white"/>
+        <circle cx="53.5" cy="45.5" r="2" fill="white"/>
+        <ellipse cx="45" cy="55" rx="6" ry="4" fill="#FFD93D"/>
+        <path d="M40 60 Q45 65 50 60" stroke="#2D2D2D" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+        <ellipse cx="25" cy="62" rx="10" ry="6" fill="#2D2D2D" transform="rotate(-20 25 62)"/>
+        <ellipse cx="65" cy="62" rx="10" ry="6" fill="#2D2D2D" transform="rotate(20 65 62)"/>
+      </svg>`
+  }
+];
+
+// ─── STATE ───────────────────────────────────────────────────────────────────
+let bouquet = [];  // array of plushie ids
+
+// ─── RENDER SIDEBAR ──────────────────────────────────────────────────────────
+function renderSidebar() {
+  const grid = document.getElementById('plushGrid');
+  grid.innerHTML = PLUSHIES.map(p => `
+    <div class="plush-card" onclick="addPlush('${p.id}', this)" title="Add ${p.name}">
+      ${p.svg(64)}
+      <div class="name">${p.name}</div>
+    </div>
+  `).join('');
+}
+
+// ─── ADD / REMOVE ─────────────────────────────────────────────────────────────
+function addPlush(id, cardEl) {
+  bouquet.push(id);
+  cardEl.classList.add('added');
+  setTimeout(() => cardEl.classList.remove('added'), 400);
+  renderBouquet();
+  updateUI();
+}
+
+function removePlush(index) {
+  bouquet.splice(index, 1);
+  renderBouquet();
+  updateUI();
+}
+
+function clearBouquet() {
+  bouquet = [];
+  document.getElementById('messageInput').value = '';
+  renderBouquet();
+  updateUI();
+}
+
+// ─── RENDER BOUQUET ───────────────────────────────────────────────────────────
+function renderBouquet() {
+  const empty  = document.getElementById('stageEmpty');
+  const items  = document.getElementById('bouquetItems');
+  const ribbon = document.getElementById('ribbon');
+
+  if (bouquet.length === 0) {
+    empty.style.display = 'flex';
+    items.style.display = 'none';
+    ribbon.style.display = 'none';
+    return;
+  }
+
+  empty.style.display = 'none';
+  items.style.display = 'flex';
+  ribbon.style.display = 'flex';
+
+  // Vary sizes for depth
+  const sizes = ['size-sm', 'size-md', 'size-lg', 'size-md', 'size-sm'];
+
+  items.innerHTML = bouquet.map((id, i) => {
+    const p = PLUSHIES.find(x => x.id === id);
+    const sizeClass = sizes[i % sizes.length];
+    const svgSize = sizeClass === 'size-sm' ? 72 : sizeClass === 'size-lg' ? 100 : 84;
+    return `
+      <div class="bouquet-item ${sizeClass}" title="Click to remove">
+        ${p.svg(svgSize)}
+        <button class="remove-btn" onclick="removePlush(${i})">✕</button>
+      </div>`;
+  }).join('');
+}
+
+// ─── UPDATE UI STATE ──────────────────────────────────────────────────────────
+function updateUI() {
+  const count = bouquet.length;
+  const badge = document.getElementById('countBadge');
+  const btnShare = document.getElementById('btnShare');
+  const btnView  = document.getElementById('btnView');
+
+  if (count > 0) {
+    badge.style.display = 'inline';
+    badge.textContent = count + (count === 1 ? ' plushie' : ' plushies');
+    btnShare.disabled = false;
+    btnView.disabled  = false;
+  } else {
+    badge.style.display = 'none';
+    btnShare.disabled = true;
+    btnView.disabled  = true;
+  }
+
+  // Message preview
+  const msg = document.getElementById('messageInput').value.trim();
+  const preview = document.getElementById('msgPreview');
+  if (msg) {
+    preview.textContent = msg;
+    preview.classList.add('has-msg');
+  } else {
+    preview.textContent = 'Your message will appear here 💬';
+    preview.classList.remove('has-msg');
+  }
+}
+
+// ─── SHARE LINK ───────────────────────────────────────────────────────────────
+function buildShareURL() {
+  const msg = encodeURIComponent(document.getElementById('messageInput').value.trim());
+  const plushStr = bouquet.join(',');
+  const base = window.location.href.replace(/builder\.html.*/, '') || window.location.origin + '/';
+  return `${base}view.html?plushies=${encodeURIComponent(plushStr)}&msg=${msg}`;
+}
+
+function openShare() {
+  const url = buildShareURL();
+  document.getElementById('shareLink').value = url;
+  document.getElementById('btnCopy').textContent = 'Copy';
+  document.getElementById('btnCopy').classList.remove('copied');
+  document.getElementById('modalOverlay').classList.add('open');
+}
+
+function closeShare() {
+  document.getElementById('modalOverlay').classList.remove('open');
+}
+
+function closeShareOnOverlay(e) {
+  if (e.target === document.getElementById('modalOverlay')) closeShare();
+}
+
+function copyLink() {
+  const input = document.getElementById('shareLink');
+  navigator.clipboard.writeText(input.value).then(() => {
+    const btn = document.getElementById('btnCopy');
+    btn.textContent = 'Copied!';
+    btn.classList.add('copied');
+  });
+}
+
+function viewBouquet() {
+  window.location.href = buildShareURL();
+}
+
+// ─── INIT ─────────────────────────────────────────────────────────────────────
+renderSidebar();
+updateUI();
+
+document.getElementById('messageInput').addEventListener('input', updateUI);
+</script>
+</body>
+</html>

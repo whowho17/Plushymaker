@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PlushBouquet — send a plushie bouquet!</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --pink: #FF6B9D;
+    --yellow: #FFD93D;
+    --mint: #6BCB77;
+    --sky: #4D96FF;
+    --orange: #FF9A3C;
+    --purple: #C77DFF;
+    --cream: #FFF8F0;
+    --dark: #2D2D2D;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Nunito', sans-serif;
+    background: var(--cream);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Confetti bg */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      radial-gradient(circle at 15% 20%, rgba(255,107,157,0.12) 0%, transparent 40%),
+      radial-gradient(circle at 85% 10%, rgba(77,150,255,0.12) 0%, transparent 40%),
+      radial-gradient(circle at 50% 80%, rgba(107,203,119,0.10) 0%, transparent 40%),
+      radial-gradient(circle at 80% 70%, rgba(255,217,61,0.10) 0%, transparent 40%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .wrapper { position: relative; z-index: 1; }
+
+  /* ---- HERO ---- */
+  .hero {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 2rem;
+    text-align: center;
+    gap: 2rem;
+  }
+
+  .logo-area { display: flex; flex-direction: column; align-items: center; gap: 0.5rem; }
+
+  .logo-plushies {
+    display: flex;
+    gap: -8px;
+    margin-bottom: 0.5rem;
+    animation: float 3s ease-in-out infinite;
+  }
+  .logo-plushies svg { width: 70px; height: 70px; filter: drop-shadow(2px 4px 6px rgba(0,0,0,0.12)); }
+  .logo-plushies svg:nth-child(2) { animation: float 3s ease-in-out infinite 0.3s; margin-top: -8px; }
+  .logo-plushies svg:nth-child(3) { animation: float 3s ease-in-out infinite 0.6s; }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-8px); }
+  }
+
+  h1 {
+    font-family: 'Fredoka One', cursive;
+    font-size: clamp(2.8rem, 8vw, 5.5rem);
+    color: var(--dark);
+    line-height: 1;
+    letter-spacing: -1px;
+  }
+  h1 span.pink { color: var(--pink); }
+  h1 span.sky { color: var(--sky); }
+
+  .tagline {
+    font-size: clamp(1rem, 2.5vw, 1.35rem);
+    font-weight: 700;
+    color: #666;
+    max-width: 420px;
+    line-height: 1.5;
+  }
+
+  .cta-group {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.3rem;
+    padding: 0.9rem 2.2rem;
+    border-radius: 100px;
+    border: none;
+    cursor: pointer;
+    text-decoration: none;
+    transition: transform 0.15s, box-shadow 0.15s;
+    letter-spacing: 0.5px;
+  }
+  .btn:hover { transform: translateY(-3px) scale(1.03); }
+  .btn:active { transform: translateY(0) scale(0.98); }
+
+  .btn-primary {
+    background: var(--pink);
+    color: white;
+    box-shadow: 0 6px 0 #d94f82, 0 8px 20px rgba(255,107,157,0.35);
+  }
+  .btn-primary:hover { box-shadow: 0 8px 0 #d94f82, 0 12px 28px rgba(255,107,157,0.4); }
+
+  .btn-secondary {
+    background: white;
+    color: var(--dark);
+    border: 3px solid var(--dark);
+    box-shadow: 4px 4px 0 var(--dark);
+    font-size: 1rem;
+  }
+  .btn-secondary:hover { box-shadow: 6px 6px 0 var(--dark); }
+
+  /* Floating deco dots */
+  .deco {
+    position: fixed;
+    border-radius: 50%;
+    opacity: 0.6;
+    animation: drift 8s ease-in-out infinite;
+    pointer-events: none;
+    z-index: 0;
+  }
+  .deco:nth-child(1)  { width: 18px; height: 18px; background: var(--pink);   top: 12%;  left: 8%;   animation-delay: 0s; }
+  .deco:nth-child(2)  { width: 12px; height: 12px; background: var(--yellow); top: 25%;  right: 12%; animation-delay: 1s; }
+  .deco:nth-child(3)  { width: 22px; height: 22px; background: var(--mint);   top: 70%;  left: 5%;   animation-delay: 2s; }
+  .deco:nth-child(4)  { width: 14px; height: 14px; background: var(--sky);    top: 80%;  right: 8%;  animation-delay: 0.5s; }
+  .deco:nth-child(5)  { width: 10px; height: 10px; background: var(--orange); top: 45%;  left: 3%;   animation-delay: 1.5s; }
+  .deco:nth-child(6)  { width: 16px; height: 16px; background: var(--purple); top: 55%;  right: 5%;  animation-delay: 2.5s; }
+
+  @keyframes drift {
+    0%, 100% { transform: translateY(0) rotate(0deg); }
+    33% { transform: translateY(-14px) rotate(5deg); }
+    66% { transform: translateY(8px) rotate(-3deg); }
+  }
+
+  /* ---- HOW IT WORKS ---- */
+  .how {
+    padding: 4rem 2rem;
+    max-width: 900px;
+    margin: 0 auto;
+    text-align: center;
+  }
+  .how h2 {
+    font-family: 'Fredoka One', cursive;
+    font-size: 2.2rem;
+    color: var(--dark);
+    margin-bottom: 2.5rem;
+  }
+  .steps {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1.5rem;
+  }
+  .step {
+    background: white;
+    border-radius: 20px;
+    padding: 2rem 1.5rem;
+    border: 3px solid var(--dark);
+    box-shadow: 5px 5px 0 var(--dark);
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+  .step:hover { transform: translateY(-4px); box-shadow: 7px 9px 0 var(--dark); }
+  .step-num {
+    width: 44px; height: 44px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.4rem;
+    color: white;
+    margin: 0 auto 1rem;
+  }
+  .step:nth-child(1) .step-num { background: var(--pink); }
+  .step:nth-child(2) .step-num { background: var(--sky); }
+  .step:nth-child(3) .step-num { background: var(--mint); }
+  .step h3 { font-family: 'Fredoka One', cursive; font-size: 1.2rem; margin-bottom: 0.4rem; }
+  .step p { font-size: 0.95rem; color: #666; line-height: 1.5; }
+
+  .step-emoji { font-size: 2.2rem; margin-bottom: 0.8rem; }
+
+  footer {
+    text-align: center;
+    padding: 2rem;
+    font-size: 0.9rem;
+    color: #aaa;
+    font-weight: 600;
+  }
+  footer a { color: var(--pink); text-decoration: none; }
+</style>
+</head>
+<body>
+<div class="deco"></div>
+<div class="deco"></div>
+<div class="deco"></div>
+<div class="deco"></div>
+<div class="deco"></div>
+<div class="deco"></div>
+
+<div class="wrapper">
+  <section class="hero">
+    <div class="logo-area">
+      <div class="logo-plushies">
+        <!-- Mini bear -->
+        <svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="40" cy="44" r="26" fill="#FFAB76"/>
+          <circle cx="22" cy="24" r="12" fill="#FFAB76"/>
+          <circle cx="58" cy="24" r="12" fill="#FFAB76"/>
+          <circle cx="22" cy="24" r="7" fill="#FF8C4B"/>
+          <circle cx="58" cy="24" r="7" fill="#FF8C4B"/>
+          <ellipse cx="40" cy="52" rx="14" ry="10" fill="#FF8C4B"/>
+          <circle cx="33" cy="38" r="4" fill="#2D2D2D"/>
+          <circle cx="47" cy="38" r="4" fill="#2D2D2D"/>
+          <circle cx="34.5" cy="36.5" r="1.5" fill="white"/>
+          <circle cx="48.5" cy="36.5" r="1.5" fill="white"/>
+          <ellipse cx="40" cy="47" rx="5" ry="3.5" fill="#2D2D2D"/>
+          <path d="M36 50 Q40 54 44 50" stroke="#2D2D2D" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+        </svg>
+        <!-- Mini bunny -->
+        <svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg">
+          <ellipse cx="30" cy="20" rx="8" ry="18" fill="#FFB3C6"/>
+          <ellipse cx="50" cy="20" rx="8" ry="18" fill="#FFB3C6"/>
+          <ellipse cx="30" cy="20" rx="5" ry="14" fill="#FF8FAB"/>
+          <ellipse cx="50" cy="20" rx="5" ry="14" fill="#FF8FAB"/>
+          <circle cx="40" cy="48" r="24" fill="#FFB3C6"/>
+          <ellipse cx="40" cy="56" rx="12" ry="8" fill="#FF8FAB"/>
+          <circle cx="33" cy="42" r="4" fill="#2D2D2D"/>
+          <circle cx="47" cy="42" r="4" fill="#2D2D2D"/>
+          <circle cx="34.5" cy="40.5" r="1.5" fill="white"/>
+          <circle cx="48.5" cy="40.5" r="1.5" fill="white"/>
+          <ellipse cx="40" cy="50" rx="4" ry="3" fill="#FF6B9D"/>
+          <path d="M36 53 Q40 57 44 53" stroke="#2D2D2D" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+        </svg>
+        <!-- Mini cat -->
+        <svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg">
+          <polygon points="18,30 26,10 34,28" fill="#A8D8EA"/>
+          <polygon points="46,28 54,10 62,30" fill="#A8D8EA"/>
+          <polygon points="21,30 26,14 32,28" fill="#FFB3C6"/>
+          <polygon points="48,28 54,14 60,30" fill="#FFB3C6"/>
+          <circle cx="40" cy="46" r="26" fill="#A8D8EA"/>
+          <ellipse cx="40" cy="54" rx="13" ry="9" fill="#87C4D8"/>
+          <circle cx="33" cy="40" r="4" fill="#2D2D2D"/>
+          <circle cx="47" cy="40" r="4" fill="#2D2D2D"/>
+          <circle cx="34.5" cy="38.5" r="1.5" fill="white"/>
+          <circle cx="48.5" cy="38.5" r="1.5" fill="white"/>
+          <ellipse cx="40" cy="48" rx="4" ry="3" fill="#FF6B9D"/>
+          <line x1="26" y1="44" x2="14" y2="42" stroke="#2D2D2D" stroke-width="1.5" stroke-linecap="round"/>
+          <line x1="26" y1="47" x2="13" y2="47" stroke="#2D2D2D" stroke-width="1.5" stroke-linecap="round"/>
+          <line x1="54" y1="44" x2="66" y2="42" stroke="#2D2D2D" stroke-width="1.5" stroke-linecap="round"/>
+          <line x1="54" y1="47" x2="67" y2="47" stroke="#2D2D2D" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+      </div>
+
+      <h1><span class="pink">Plush</span><span class="sky">Bouquet</span></h1>
+      <p class="tagline">Build a bouquet of adorable plushies<br>and share it with someone you love 🎀</p>
+    </div>
+
+    <div class="cta-group">
+      <a href="builder.html" class="btn btn-primary">🧸 Build a Bouquet</a>
+      <a href="builder.html" class="btn btn-secondary">See how it works ↓</a>
+    </div>
+  </section>
+
+  <section class="how">
+    <h2>How it works 🌟</h2>
+    <div class="steps">
+      <div class="step">
+        <div class="step-emoji">🧸</div>
+        <div class="step-num">1</div>
+        <h3>Pick your plushies</h3>
+        <p>Choose from bears, bunnies, cats, dogs, and more — as many as you like!</p>
+      </div>
+      <div class="step">
+        <div class="step-emoji">🎀</div>
+        <div class="step-num">2</div>
+        <h3>Arrange your bouquet</h3>
+        <p>Add a sweet message and see your plushie bouquet come together beautifully.</p>
+      </div>
+      <div class="step">
+        <div class="step-emoji">💌</div>
+        <div class="step-num">3</div>
+        <h3>Share the link</h3>
+        <p>Get a unique link and send it to anyone to brighten their day instantly!</p>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    made with 🧸 &amp; love &nbsp;·&nbsp; <a href="builder.html">build yours →</a>
+  </footer>
+</div>
+</body>
+</html>
